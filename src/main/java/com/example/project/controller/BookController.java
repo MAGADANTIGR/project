@@ -1,55 +1,62 @@
 package com.example.project.controller;
 
-import com.example.project.entity.BorrowedBook;
-import com.example.project.service.BookService;
-import com.example.project.service.LibraryService;
+import com.example.project.dto.BookDTO;
+import com.example.project.mappers.BookMapper;
+import com.example.project.models.Book;
+import com.example.project.serviceImpl.BookServiceImpl;
+import com.example.project.serviceImpl.LibraryServiceImpl;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.example.project.entity.Book;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/books")
 @Api(tags = "Book API")
 public class BookController {
     @Autowired
-    private BookService bookService;
+    private BookServiceImpl bookServiceImpl;
     @Autowired
-    private LibraryService libraryService;
+    private LibraryServiceImpl libraryServiceImpl;
 
     @GetMapping
     @ApiOperation("Получение списка всех книг")
-    public List<Book> getAllBooks() {
-        return bookService.getAllBooks();
+    public List<BookDTO> getAllBooks() {
+        List<Book> books = bookServiceImpl.getAllBooks();
+        return books.stream().map(BookMapper.INSTANCE::toDto).collect(Collectors.toList());
     }
     @GetMapping("/{id}")
     @ApiOperation("Получение книги по ее id")
-    public Book getBookById(@PathVariable Long id) {
-        return bookService.getBookById(id);
+    public BookDTO getBookById(@PathVariable Long id) {
+        Book book = bookServiceImpl.getBookById(id);
+        return BookMapper.INSTANCE.toDto(book);
     }
     @GetMapping("/isbn/{isbn}")
     @ApiOperation("Получение книги по ее isbn")
-    public Book getBookByIsbn(@PathVariable String isbn) {
-        return bookService.getBookByIsbn(isbn);
+    public BookDTO getBookByIsbn(@PathVariable String isbn) {
+        Book book = bookServiceImpl.getBookByIsbn(isbn);
+        return BookMapper.INSTANCE.toDto(book);
     }
     @PostMapping
     @ApiOperation("Добавление книги")
-    public ResponseEntity<String> addBook(@RequestBody Book book) {
-        libraryService.addBook(book);
-        return bookService.addBook(book);
+    public ResponseEntity<String> addBook(@RequestBody BookDTO bookDTO) {
+        Book book = BookMapper.INSTANCE.toEntity(bookDTO);
+        libraryServiceImpl.addBook(book);
+        return bookServiceImpl.addBook(book);
     }
     @DeleteMapping("/{id}")
     @ApiOperation("Удаление книги")
     public ResponseEntity<String> deleteBook(@PathVariable Long id) {
-        return bookService.deleteBook(id);
+        return bookServiceImpl.deleteBook(id);
     }
     @PutMapping("/{id}")
     @ApiOperation("Обновление информации о книге")
-    public ResponseEntity<String> updateBook(@PathVariable Long id, @RequestBody Book bookDetails) {
-        return bookService.updateBook(id, bookDetails);
+    public ResponseEntity<String> updateBook(@PathVariable Long id, @RequestBody BookDTO bookDetails) {
+        Book book = BookMapper.INSTANCE.toEntity(bookDetails);
+        return bookServiceImpl.updateBook(id, book);
     }
 }
